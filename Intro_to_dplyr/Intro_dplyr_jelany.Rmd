@@ -1,0 +1,116 @@
+---
+title: "Introduction to dplyr"
+author: "Jelany Duali"
+date: "2023-06-01"
+output: html_document
+---
+
+```{setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview 
+
+dplyr is a grammar of data manipulation, providing a consistent set of verbs that help you solve the most common data manipulation challenges. Basically, it helps you address the issue "my data is X and I want to transform it into Y". 
+
+dplyr is largely oriented towards the manipulation of **dataframes**: two dimensional table of rows and columns.
+
+Some of the important functionsin this package: 
+
+* **mutate()** create a new variable (column) in your dataframe by modifying existing variables
+
+* **select()** pick variables based on their names.
+
+* **filter()** pick cases based on their values
+
+* **summarise()** reduce multiple values down to a single summary 
+
+* **arrange()** change how rows are ordered in a dataframe 
+
+These functions can interact with the **group_by()** function, which allows us to apply them to different subgroups in our dataset.  
+
+First things first, we'll install and load dplyr. You could also install the whole tydiverse package, which is a suite of packages that includes dplyr.  
+
+```{r install dplyr, eval = FALSE}
+install.packages("dplyr")
+library(dplyr)
+```
+
+We're also going to install the package *mefa4*, but that's just because I want to use their amibirds dataset for some examples. We'll also be using the mtcars and iris dataset, from the *datasets* package, and starwars dataset, from *dplyr*  
+* **abmibirds** is a dataset of bird point counts.
+* **mtcars** is a dataset  from the 1974 *Motor trends* US Magazine with the fuel consumption and 10 aspects of automobile design and performance for 32 automobiles 
+* **iris** gives the measurements in centimeters of the variables sepal length and width and petal length and width, respectively, for 50 flowers from each of 3 species of iris. 
+* **starwars** is a dataset with information on star wars characters. Note that it is a tibble instead of a dataframe. We'll see what that is a bit later. 
+
+
+```{r datasets, eval = FALSE}
+install.packages("mefa4")
+library(mefa4)
+
+# We can have a look at the first few lines of each dataset
+head(abmibirds)
+head(mtcars)
+head(iris)
+head(starwars)
+```
+
+# The pipe operator 
+
+Before we start going through examples, we have to learn about the "pipe" operator: %>%
+
+This operator allows you to take the result of one function call and feed it into another function right away. This way, you don't have to call your results inside of the other function. 
+
+Here are some examples with mtcars:
+
+```{r pipe operator}
+# Subset the mtcars dataset to get only cars with 6 cylinders - without pipes 
+filter(mtcars, mtcars$cyl == 6) 
+
+# Subset the mtcars dataset to get only cars with 6 cylinders - with
+mtcars %>% filter(cyl == 6)
+
+# For a more complex example, we can find the mean fuel consumption (mpg) of car models with 6 cylinders (cyl)
+mtcars %>%
+   group_by(cyl) %>% # group by the number of cylinder 
+   summarise(mpg = mean(mpg)) # calculate the mean of each group 
+
+# The code printed the results, but we also can store them in a variable
+mpg.by.cyl <- mtcars %>%
+  group_by(cyl) %>% 
+  summarise(mpg = mean(mpg)) 
+
+#Let's check the class of this object
+class(mpg.by.cyl)
+
+```
+
+# Tibbles 
+
+The code above return a tibble. Tibbles are similar to dataframes, with some tweaks. For example, they only print the first 10 columns when you enter them into your console. 
+
+You can read about the differences between dataframes and tibbles here: https://jtr13.github.io/cc21fall1/tibble-vs.-dataframe.html#:~:text=A%20tibble%20is%20often%20considered,data%20frames%20in%20some%20aspects.
+
+Generally you can turn your tibble into a dataframe using **as.data.frame()** 
+
+```{r tibble to dataframe}
+mpg.by.cyl <- as.data.frame(mpg.by.cyl)
+```
+
+# The mutate function 
+
+I think this is one of the most useful function in dplyr. 
+
+The mutate function allows you to create new columns that are functions of existing variables. It can also modify columns (if the name is the same as an existing column) and delete columns (by setting their value to NULL).
+
+For example, the iris dataset has petal length and petal width. What if we wanted to use those measurements to estimate petal area? 
+
+```{r mutate function example}
+iris %>%  mutate(Petal.Area = Petal.Length * Petal.Width)
+
+#We could also have done this in base R
+iris$Area <- iris$Petal.Length * iris$Petal.Width
+
+```
+
+
+# The select function 
