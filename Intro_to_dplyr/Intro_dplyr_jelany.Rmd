@@ -9,13 +9,13 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Overview 
+### Overview 
 
-dplyr is a grammar of data manipulation, providing a consistent set of verbs that help you solve the most common data manipulation challenges. Basically, it helps you address the issue "my data is X and I want to transform it into Y". 
+dplyr is  package aimed at facilitating data manipulation. Basically, it helps you address the issue "my data is X and I want to transform it into Y". 
 
 dplyr is largely oriented towards the manipulation of **dataframes**: two dimensional table of rows and columns.
 
-Some of the important functionsin this package: 
+Some of the important functions in this package: 
 
 * **mutate()** create a new variable (column) in your dataframe by modifying existing variables
 
@@ -31,20 +31,24 @@ These functions can interact with the **group_by()** function, which allows us t
 
 First things first, we'll install and load dplyr. You could also install the whole tydiverse package, which is a suite of packages that includes dplyr.  
 
-```{r install dplyr, eval = FALSE}
-install.packages("dplyr")
+```{r install dplyr, echo=T, results='hide', message = F}
+#install.packages("dplyr")
 library(dplyr)
 ```
 
-We're also going to install the package *mefa4*, but that's just because I want to use their amibirds dataset for some examples. We'll also be using the mtcars and iris dataset, from the *datasets* package, and starwars dataset, from *dplyr*  
-* **abmibirds** is a dataset of bird point counts.
+We're also going to install and load the package *mefa4*, but that's just because I want to use their abmibirds dataset for some examples. We'll also be using the mtcars and iris dataset, from the *datasets* package, and starwars dataset, from *dplyr*.
+
+* **abmibirds** is a dataset of bird point counts collected by the Alberta Biodiversity Monitoring Institute.
+
 * **mtcars** is a dataset  from the 1974 *Motor trends* US Magazine with the fuel consumption and 10 aspects of automobile design and performance for 32 automobiles 
+
 * **iris** gives the measurements in centimeters of the variables sepal length and width and petal length and width, respectively, for 50 flowers from each of 3 species of iris. 
-* **starwars** is a dataset with information on star wars characters. Note that it is a tibble instead of a dataframe. We'll see what that is a bit later. 
+
+* **starwars** is a dataset with information on Star Wars characters. Note that it is a tibble instead of a dataframe. We'll see what that is a bit later. 
 
 
-```{r datasets, eval = FALSE}
-install.packages("mefa4")
+```{r datasets, echo=T, results='hide', message = F}
+#install.packages("mefa4")
 library(mefa4)
 
 # We can have a look at the first few lines of each dataset
@@ -54,19 +58,19 @@ head(iris)
 head(starwars)
 ```
 
-# The pipe operator 
+### The pipe operator 
 
-Before we start going through examples, we have to learn about the "pipe" operator: %>%
+Before we start going through examples for each function, we have to learn about the "pipe" operator: %>%
 
-This operator allows you to take the result of one function call and feed it into another function right away. This way, you don't have to call your results inside of the other function. 
+This operator allows you to take the result of one function call and feed it into another function. This way, you don't have to call your results inside of the other function. Rstudio has shortcuts for typing the pipe operator: Ctrl + Shift + M (in Windows) and Cmd + Shift + M (on Mac).
 
 Here are some examples with mtcars:
 
-```{r pipe operator}
+```{r pipe operator, echo=T, results='hide'}
 # Subset the mtcars dataset to get only cars with 6 cylinders - without pipes 
 filter(mtcars, mtcars$cyl == 6) 
 
-# Subset the mtcars dataset to get only cars with 6 cylinders - with
+# Subset the mtcars dataset to get only cars with 6 cylinders - with pipes
 mtcars %>% filter(cyl == 6)
 
 # For a more complex example, we can find the mean fuel consumption (mpg) of car models with 6 cylinders (cyl)
@@ -84,33 +88,211 @@ class(mpg.by.cyl)
 
 ```
 
-# Tibbles 
+I'll be using the pipe operator a lot in my examples for dplyr functions. But these functions can also be applied using the "conventional" approach of calling your data as a parameter.  
 
-The code above return a tibble. Tibbles are similar to dataframes, with some tweaks. For example, they only print the first 10 columns when you enter them into your console. 
+###  Tibbles 
 
-You can read about the differences between dataframes and tibbles here: https://jtr13.github.io/cc21fall1/tibble-vs.-dataframe.html#:~:text=A%20tibble%20is%20often%20considered,data%20frames%20in%20some%20aspects.
+The code above returns a tibble, referred to as a "tbl_df" in R. Tibbles are similar to dataframes, with some tweaks. For example, they only print the first 10 columns when you enter them into your console. 
 
-Generally you can turn your tibble into a dataframe using **as.data.frame()** 
+You can read about the differences between dataframes and tibbles here: https://cran.r-project.org/web/packages/tibble/vignettes/tibble.html 
 
-```{r tibble to dataframe}
+Generally you can turn your tibble into a dataframe using **as.data.frame()**. 
+
+We will use both tibbles and dataframes here. 
+
+```{r tibble to dataframe, echo=T, results='hide'}
 mpg.by.cyl <- as.data.frame(mpg.by.cyl)
 ```
 
-# The mutate function 
+###  mutate
 
-I think this is one of the most useful function in dplyr. 
+I think this is the most useful function in dplyr. 
 
 The mutate function allows you to create new columns that are functions of existing variables. It can also modify columns (if the name is the same as an existing column) and delete columns (by setting their value to NULL).
 
 For example, the iris dataset has petal length and petal width. What if we wanted to use those measurements to estimate petal area? 
 
-```{r mutate function example}
-iris %>%  mutate(Petal.Area = Petal.Length * Petal.Width)
+```{r mutate function example, echo=T, results='hide'}
+# Create a new dataframe with the petal area
+iris <- iris %>%  mutate(Petal.Area = Petal.Length * Petal.Width)
 
-#We could also have done this in base R
+# We could also have done this in base R 
 iris$Area <- iris$Petal.Length * iris$Petal.Width
+
+# Delete the Petal.length column
+iris %>%  mutate(Petal.Length = NULL)
+
+# multiply values in the Petal.Length column by 100
+iris %>%  mutate(Petal.Length = Petal.Length * 100)
+```
+
+Pretty straightforward. But what if we want to make a different operation depending on the row that we are in? 
+
+Let's now look at the starwars dataset. It has the height of the different characters in cm. We'll classify these characters as "tall" or "short" based on whether they are larger than 175 cm. 
+
+We can use the **if_else()** function to let the **mutate()** know whether a character in a row has a height that is greater than 175 cm. The height of each character is provided in the "height" column of the tibble. 
+
+Note that **if_else()** is distinct from the **ifelse()** function in base R because it can handle missing values with the "missing" argument.
+
+```{r mutate function with ifelse example, echo=T, results='hide'}
+# Create a new tibble with a height class variable 
+sw.heights <- starwars %>%  mutate(height_class = if_else(height > 175,  # is the height greater than 175cm ?
+                                      "tall", # if yes
+                                      "short", # if no
+                                      missing = "unknown")) # if there is no value
+
+# We can have a look at the relevevant columns of the tibble 
+sw.heights[, c("name", "height", "height_class")]
+```
+
+This would be a bit tricky to perform without dplyr. One way to do it would be with a loop, but that would be much less computationally efficient with a large database. Functions like mutate that operate on all elements of a vector at the same time are referred to as "vectorized" functions. They can often be used for the same purposes as loops. 
+
+If we want to perform more than two operations, we can use **case_when()**. This function allows us to use multiple if_else statements.  
+
+For example, let's add a third height class, "medium sized", for individuals that are between 155 and 175 cm. This time we use the ".default" argument to set a value that will be applied in our height class column if the height of one character is NA. 
+
+```{r case_when example, echo=T, results='hide'}
+# Create a new tibble with our three height classes 
+sw.heights <- starwars %>%  mutate(height_class = case_when(height > 175 ~ "tall",  
+                                      height >= 155 & height <= 175 ~ "medium",
+                                      height < 155 ~ "short", 
+                                      .default = "unknown")) 
+
+# We can have a look at the columns again 
+sw.heights[, c("name", "height", "height_class")]
+```
+
+Alright, that's all for mutate for now, thought we'll use it in subsequent examples. 
+
+### arrange
+
+The **arrange()** function can be used to order the rows of a dataframe by the values of the selected columns.If applied on a single column, it works similar to the **order()** function of base R. 
+
+Overall, **arrange()** is much is easier to use than **order()** as the former can be directly applied to a dataframe, while the latter requires subsetting. Additionally, **arrange()** easily be used to sort a dataframe by multiple columns. 
+
+**arrange()** sorts in ascending order by default. With values that are are in the character class, it will use the alphabetical order. 
+
+```{r order example, echo=T, results='hide'}
+# Sort the starwars database by the height of the characters in descending order
+starwars %>% arrange(desc(height))
+
+# Sort the starwars database by the height of the characters in ascending order
+starwars %>% arrange(height)
+
+# We can do something similar in base R with order(), but it is more complicated 
+starwars[order(starwars$hair_color),]
+
+# sort the starwars database first by hair colour, then by birth year, both in ascending order 
+starwars %>% arrange(hair_color, birth_year)
 
 ```
 
+### filter and select 
 
-# The select function 
+The ***filter()*** function allows us to filter a dataset based on one or more conditions. You would usually use it to extract only a subset of interest from your data. I'm sure you do this all the time. 
+
+Let's look at some examples with the abmibirds datase using both ***filter()*** and base R. 
+
+```{r filter example, echo=T, results='hide'}
+# Let's filter the data so we only have counts of Ovenbirds 
+abmibirds %>% filter(Common.Name == "Ovenbird")
+
+# Again we can also perform this using Base R 
+abmibirds[(abmibirds$Common.Name == "Ovenbird"),]
+```
+
+The ***select()*** function is similar to ***filter()***, but it is used to select columns instead of rows. It is mainly useful in datasets with with a large number of columns. 
+
+***select()*** has some several useful operators and methods that can be used to refine your selection. You can review those here: https://dplyr.tidyverse.org/reference/select.html
+
+Here are some examples: 
+
+```{r select example, echo=T, results='hide'}
+starwars %>% select(height)
+starwars %>% select(homeworld, height, mass)
+starwars %>% select(name:mass)
+iris %>% select(!ends_with("Width"))
+```
+
+### summarise and group_by 
+
+***summarise()*** is used to create a new dataframe with summary statistics calculated from your dataset. This is done by calling other functions inside your call to ***summarise()***. These functions include the following:
+
+* Center: ***mean()***, ***median()***
+
+* Spread: ***sd()***, ***IQR()***, ***mad()***
+
+* Range: ***min()***, ***max()***
+
+* Position: ***first()***, ***last()***, ***nth()***
+
+* Count: ***n()***, ***n_distinct()***
+
+* Logical: ***any()***, ***all()***
+
+Here are some examples: 
+```{r summarise example, echo=T, results='hide'}
+# What is the mean displacement of cars in mtcars? 
+mtcars %>%
+  summarise(mean = mean(disp))
+
+# What is the range of the displacement of cars in mtcars?
+mtcars %>%
+  summarise(range = range(disp))
+```
+
+When called by itself, the ***summarise()*** will summarise the whole dataset, but we can make it calculate separate summary statistics for different subgroups using ***group_by()***. 
+
+For example, let's calculate the median sepal length for each if the three species in the iris dataset
+
+```{r group_by example, echo=T, results='hide'}
+iris %>% group_by(Species) %>%
+  summarise(median.sepal.length = median(Sepal.Length))
+```
+
+***group_by()*** can also be used with the other functions we described so far.
+
+Generally, ***group_by()*** is not used by itself as it returns a grouped_df (grouped dataframe) object, which just looks like your original dataset, albeit with a grouping attribute. 
+
+However you can pass some expressions in ***group_by()*** that act like those in mutate. More info is available here: https://dplyr.tidyverse.org/reference/group_by.html
+
+```{r group_by example by itself, echo=T, results='hide'}
+iris %>% group_by(Species)
+```
+
+### Putting it all together 
+
+Now that we've had a look at the most important functions in dplyr, let's try to use these tools perform some data manipulations. 
+
+As it is, the abmibirds dataset would likely not be suitable for certain analyses.There is one row per bird, whereas we might be more interested in the number of birds observed under certain conditions. 
+
+Let's say that we are interested in the number of birds of each species that was observed in each year of the study. How would we go about getting a dataframe with this information? 
+
+Before getting started, I like to think about the different steps that are required to get the necessary information. 
+
+```{r exercice 1, echo=T, results='hide'}
+year.summary <- abmibirds %>% group_by(Year, Common.Name) %>%
+  summarise(Observations = n())
+
+# We can now create a plot of species observation per year
+
+#install.packages(ggplot2)
+library(ggplot2)
+
+#Let's plot points for the Common Redstart 
+Resdstart.summary <- year.summary  %>% filter(Common.Name == "American Redstart")
+
+ggplot(data = Resdstart.summary, aes(x = Year, y = Observations)) + 
+  geom_point()+
+  theme_bw()
+```
+
+Here is tougher question: what is the average number of birds seen at a site under each of the different precipitation conditions recorded. 
+
+You can have a look at the different classes of precipitation using ***unique(abmibirds$Precipitation)***
+
+## References / additional info
+
+* The dplyr website: https://dplyr.tidyverse.org/index.html 
+
+* R for data science chapter 5: https://r4ds.had.co.nz/transform.html 

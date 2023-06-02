@@ -357,16 +357,15 @@ display: none;
 </div>
 
 
-<div id="overview" class="section level2">
-<h2>Overview</h2>
-<p>dplyr is a grammar of data manipulation, providing a consistent set
-of verbs that help you solve the most common data manipulation
-challenges. Basically, it helps you address the issue “my data is X and
-I want to transform it into Y”.</p>
+<div id="overview" class="section level3">
+<h3>Overview</h3>
+<p>dplyr is package aimed at facilitating data manipulation. Basically,
+it helps you address the issue “my data is X and I want to transform it
+into Y”.</p>
 <p>dplyr is largely oriented towards the manipulation of
 <strong>dataframes</strong>: two dimensional table of rows and
 columns.</p>
-<p>Some of the important functionsin this package:</p>
+<p>Some of the important functions in this package:</p>
 <ul>
 <li><p><strong>mutate()</strong> create a new variable (column) in your
 dataframe by modifying existing variables</p></li>
@@ -385,46 +384,292 @@ dataset.</p>
 <p>First things first, we’ll install and load dplyr. You could also
 install the whole tydiverse package, which is a suite of packages that
 includes dplyr.</p>
-<pre class="install"><code>install.packages(&quot;dplyr&quot;)
+<pre class="r"><code>#install.packages(&quot;dplyr&quot;)
 library(dplyr)</code></pre>
-<p>We’re also going to install the package mefa4, but that’s just
-because I want to use their amibirds dataset for some examples. We’ll
-also be using the mtcars and iris datasets, which are in the datasets
-package.</p>
+<p>We’re also going to install and load the package <em>mefa4</em>, but
+that’s just because I want to use their abmibirds dataset for some
+examples. We’ll also be using the mtcars and iris dataset, from the
+<em>datasets</em> package, and starwars dataset, from
+<em>dplyr</em>.</p>
 <ul>
-<li><strong>abmibirds</strong> is a dataset of bird point counts.</li>
-<li><strong>mtcars</strong> is a dataset from the 1974 <em>Motor
+<li><p><strong>abmibirds</strong> is a dataset of bird point counts
+collected by the Alberta Biodiversity Monitoring Institute.</p></li>
+<li><p><strong>mtcars</strong> is a dataset from the 1974 <em>Motor
 trends</em> US Magazine with the fuel consumption and 10 aspects of
-automobile design and performance for 32 automobiles</li>
-<li><strong>iris</strong> gives the measurements in centimeters of the
-variables sepal length and width and petal length and width,
-respectively, for 50 flowers from each of 3 species of iris.</li>
+automobile design and performance for 32 automobiles</p></li>
+<li><p><strong>iris</strong> gives the measurements in centimeters of
+the variables sepal length and width and petal length and width,
+respectively, for 50 flowers from each of 3 species of iris.</p></li>
+<li><p><strong>starwars</strong> is a dataset with information on Star
+Wars characters. Note that it is a tibble instead of a dataframe. We’ll
+see what that is a bit later.</p></li>
 </ul>
-<pre class="datasets"><code>install.packages(&quot;mefa4&quot;)
+<pre class="r"><code>#install.packages(&quot;mefa4&quot;)
 library(mefa4)
 
-# we can have a look at the first few lines of each dataset
+# We can have a look at the first few lines of each dataset
 head(abmibirds)
 head(mtcars)
-head(iris)</code></pre>
+head(iris)
+head(starwars)</code></pre>
 </div>
-<div id="the-pipe-operator" class="section level2">
-<h2>The pipe operator</h2>
-<p>Before we start going through examples, we have to learn about the
-“pipe” operator: %&gt;%</p>
+<div id="the-pipe-operator" class="section level3">
+<h3>The pipe operator</h3>
+<p>Before we start going through examples for each function, we have to
+learn about the “pipe” operator: %&gt;%</p>
 <p>This operator allows you to take the result of one function call and
-feed it into another function right away. This way, you don’t have to
-call your results inside of the other function.</p>
-<p>Here is an example with mtcars:</p>
-<pre class="pipe"><code>
-# find the  
+feed it into another function. This way, you don’t have to call your
+results inside of the other function. Rstudio has shortcuts for typing
+the pipe operator: Ctrl + Shift + M (in Windows) and Cmd + Shift + M (on
+Mac).</p>
+<p>Here are some examples with mtcars:</p>
+<pre class="r"><code># Subset the mtcars dataset to get only cars with 6 cylinders - without pipes 
+filter(mtcars, mtcars$cyl == 6) 
+
+# Subset the mtcars dataset to get only cars with 6 cylinders - with pipes
+mtcars %&gt;% filter(cyl == 6)
+
+# For a more complex example, we can find the mean fuel consumption (mpg) of car models with 6 cylinders (cyl)
 mtcars %&gt;%
-   group_by(cyl) %&gt;% 
-   summarise(mpg = mean(mpg)) 
-</code></pre>
-<p>Note that the <code>echo = FALSE</code> parameter was added to the
-code chunk to prevent printing of the R code that generated the
-plot.</p>
+   group_by(cyl) %&gt;% # group by the number of cylinder 
+   summarise(mpg = mean(mpg)) # calculate the mean of each group 
+
+# The code printed the results, but we also can store them in a variable
+mpg.by.cyl &lt;- mtcars %&gt;%
+  group_by(cyl) %&gt;% 
+  summarise(mpg = mean(mpg)) 
+
+#Let&#39;s check the class of this object
+class(mpg.by.cyl)</code></pre>
+<p>I’ll be using the pipe operator a lot in my examples for dplyr
+functions. But these functions can also be applied using the
+“conventional” approach of calling your data as a parameter.</p>
+</div>
+<div id="tibbles" class="section level3">
+<h3>Tibbles</h3>
+<p>The code above returns a tibble, referred to as a “tbl_df” in R.
+Tibbles are similar to dataframes, with some tweaks. For example, they
+only print the first 10 columns when you enter them into your
+console.</p>
+<p>You can read about the differences between dataframes and tibbles
+here: <a href="https://cran.r-project.org/web/packages/tibble/vignettes/tibble.html" class="uri">https://cran.r-project.org/web/packages/tibble/vignettes/tibble.html</a></p>
+<p>Generally you can turn your tibble into a dataframe using
+<strong>as.data.frame()</strong>.</p>
+<p>We will use both tibbles and dataframes here.</p>
+<pre class="r"><code>mpg.by.cyl &lt;- as.data.frame(mpg.by.cyl)</code></pre>
+</div>
+<div id="mutate" class="section level3">
+<h3>mutate</h3>
+<p>I think this is the most useful function in dplyr.</p>
+<p>The mutate function allows you to create new columns that are
+functions of existing variables. It can also modify columns (if the name
+is the same as an existing column) and delete columns (by setting their
+value to NULL).</p>
+<p>For example, the iris dataset has petal length and petal width. What
+if we wanted to use those measurements to estimate petal area?</p>
+<pre class="r"><code># Create a new dataframe with the petal area
+iris &lt;- iris %&gt;%  mutate(Petal.Area = Petal.Length * Petal.Width)
+
+# We could also have done this in base R 
+iris$Area &lt;- iris$Petal.Length * iris$Petal.Width
+
+# Delete the Petal.length column
+iris %&gt;%  mutate(Petal.Length = NULL)
+
+# multiply values in the Petal.Length column by 100
+iris %&gt;%  mutate(Petal.Length = Petal.Length * 100)</code></pre>
+<p>Pretty straightforward. But what if we want to make a different
+operation depending on the row that we are in?</p>
+<p>Let’s now look at the starwars dataset. It has the height of the
+different characters in cm. We’ll classify these characters as “tall” or
+“short” based on whether they are larger than 175 cm.</p>
+<p>We can use the <strong>if_else()</strong> function to let the
+<strong>mutate()</strong> know whether a character in a row has a height
+that is greater than 175 cm. The height of each character is provided in
+the “height” column of the tibble.</p>
+<p>Note that <strong>if_else()</strong> is distinct from the
+<strong>ifelse()</strong> function in base R because it can handle
+missing values with the “missing” argument.</p>
+<pre class="r"><code># Create a new tibble with a height class variable 
+sw.heights &lt;- starwars %&gt;%  mutate(height_class = if_else(height &gt; 175,  # is the height greater than 175cm ?
+                                      &quot;tall&quot;, # if yes
+                                      &quot;short&quot;, # if no
+                                      missing = &quot;unknown&quot;)) # if there is no value
+
+# We can have a look at the relevevant columns of the tibble 
+sw.heights[, c(&quot;name&quot;, &quot;height&quot;, &quot;height_class&quot;)]</code></pre>
+<p>This would be a bit tricky to perform without dplyr. One way to do it
+would be with a loop, but that would be much less computationally
+efficient with a large database. Functions like mutate that operate on
+all elements of a vector at the same time are referred to as
+“vectorized” functions. They can often be used for the same purposes as
+loops.</p>
+<p>If we want to perform more than two operations, we can use
+<strong>case_when()</strong>. This function allows us to use multiple
+if_else statements.</p>
+<p>For example, let’s add a third height class, “medium sized”, for
+individuals that are between 155 and 175 cm. This time we use the
+“.default” argument to set a value that will be applied in our height
+class column if the height of one character is NA.</p>
+<pre class="r"><code># Create a new tibble with our three height classes 
+sw.heights &lt;- starwars %&gt;%  mutate(height_class = case_when(height &gt; 175 ~ &quot;tall&quot;,  
+                                      height &gt;= 155 &amp; height &lt;= 175 ~ &quot;medium&quot;,
+                                      height &lt; 155 ~ &quot;short&quot;, 
+                                      .default = &quot;unknown&quot;)) 
+
+# We can have a look at the columns again 
+sw.heights[, c(&quot;name&quot;, &quot;height&quot;, &quot;height_class&quot;)]</code></pre>
+<p>Alright, that’s all for mutate for now, thought we’ll use it in
+subsequent examples.</p>
+</div>
+<div id="arrange" class="section level3">
+<h3>arrange</h3>
+<p>The <strong>arrange()</strong> function can be used to order the rows
+of a dataframe by the values of the selected columns.If applied on a
+single column, it works similar to the <strong>order()</strong> function
+of base R.</p>
+<p>Overall, <strong>arrange()</strong> is much is easier to use than
+<strong>order()</strong> as the former can be directly applied to a
+dataframe, while the latter requires subsetting. Additionally,
+<strong>arrange()</strong> easily be used to sort a dataframe by
+multiple columns.</p>
+<p><strong>arrange()</strong> sorts in ascending order by default. With
+values that are are in the character class, it will use the alphabetical
+order.</p>
+<pre class="r"><code># Sort the starwars database by the height of the characters in descending order
+starwars %&gt;% arrange(desc(height))
+
+# Sort the starwars database by the height of the characters in ascending order
+starwars %&gt;% arrange(height)
+
+# We can do something similar in base R with order(), but it is more complicated 
+starwars[order(starwars$hair_color),]
+
+# sort the starwars database first by hair colour, then by birth year, both in ascending order 
+starwars %&gt;% arrange(hair_color, birth_year)</code></pre>
+</div>
+<div id="filter-and-select" class="section level3">
+<h3>filter and select</h3>
+<p>The <strong><em>filter()</em></strong> function allows us to filter a
+dataset based on one or more conditions. You would usually use it to
+extract only a subset of interest from your data. I’m sure you do this
+all the time.</p>
+<p>Let’s look at some examples with the abmibirds datase using both
+<strong><em>filter()</em></strong> and base R.</p>
+<pre class="r"><code># Let&#39;s filter the data so we only have counts of Ovenbirds 
+abmibirds %&gt;% filter(Common.Name == &quot;Ovenbird&quot;)
+
+# Again we can also perform this using Base R 
+abmibirds[(abmibirds$Common.Name == &quot;Ovenbird&quot;),]</code></pre>
+<p>The <strong><em>select()</em></strong> function is similar to
+<strong><em>filter()</em></strong>, but it is used to select columns
+instead of rows. It is mainly useful in datasets with with a large
+number of columns.</p>
+<p><strong><em>select()</em></strong> has some several useful operators
+and methods that can be used to refine your selection. You can review
+those here: <a href="https://dplyr.tidyverse.org/reference/select.html" class="uri">https://dplyr.tidyverse.org/reference/select.html</a></p>
+<p>Here are some examples:</p>
+<pre class="r"><code>starwars %&gt;% select(height)
+starwars %&gt;% select(homeworld, height, mass)
+starwars %&gt;% select(name:mass)
+iris %&gt;% select(!ends_with(&quot;Width&quot;))</code></pre>
+</div>
+<div id="summarise-and-group_by" class="section level3">
+<h3>summarise and group_by</h3>
+<p><strong><em>summarise()</em></strong> is used to create a new
+dataframe with summary statistics calculated from your dataset. This is
+done by calling other functions inside your call to
+<strong><em>summarise()</em></strong>. These functions include the
+following:</p>
+<ul>
+<li><p>Center: <strong><em>mean()</em></strong>,
+<strong><em>median()</em></strong></p></li>
+<li><p>Spread: <strong><em>sd()</em></strong>,
+<strong><em>IQR()</em></strong>,
+<strong><em>mad()</em></strong></p></li>
+<li><p>Range: <strong><em>min()</em></strong>,
+<strong><em>max()</em></strong></p></li>
+<li><p>Position: <strong><em>first()</em></strong>,
+<strong><em>last()</em></strong>,
+<strong><em>nth()</em></strong></p></li>
+<li><p>Count: <strong><em>n()</em></strong>,
+<strong><em>n_distinct()</em></strong></p></li>
+<li><p>Logical: <strong><em>any()</em></strong>,
+<strong><em>all()</em></strong></p></li>
+</ul>
+<p>Here are some examples:</p>
+<pre class="r"><code># What is the mean displacement of cars in mtcars? 
+mtcars %&gt;%
+  summarise(mean = mean(disp))
+
+# What is the range of the displacement of cars in mtcars?
+mtcars %&gt;%
+  summarise(range = range(disp))</code></pre>
+<pre><code>## Warning: Returning more (or less) than 1 row per `summarise()` group was deprecated in
+## dplyr 1.1.0.
+## ℹ Please use `reframe()` instead.
+## ℹ When switching from `summarise()` to `reframe()`, remember that `reframe()`
+##   always returns an ungrouped data frame and adjust accordingly.
+## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+## generated.</code></pre>
+<p>When called by itself, the <strong><em>summarise()</em></strong> will
+summarise the whole dataset, but we can make it calculate separate
+summary statistics for different subgroups using
+<strong><em>group_by()</em></strong>.</p>
+<p>For example, let’s calculate the median sepal length for each if the
+three species in the iris dataset</p>
+<pre class="r"><code>iris %&gt;% group_by(Species) %&gt;%
+  summarise(median.sepal.length = median(Sepal.Length))</code></pre>
+<p><strong><em>group_by()</em></strong> can also be used with the other
+functions we described so far.</p>
+<p>Generally, <strong><em>group_by()</em></strong> is not used by itself
+as it returns a grouped_df (grouped dataframe) object, which just looks
+like your original dataset, albeit with a grouping attribute.</p>
+<p>However you can pass some expressions in
+<strong><em>group_by()</em></strong> that act like those in mutate. More
+info is available here: <a href="https://dplyr.tidyverse.org/reference/group_by.html" class="uri">https://dplyr.tidyverse.org/reference/group_by.html</a></p>
+<pre class="r"><code>iris %&gt;% group_by(Species)</code></pre>
+</div>
+<div id="putting-it-all-together" class="section level3">
+<h3>Putting it all together</h3>
+<p>Now that we’ve had a look at the most important functions in dplyr,
+let’s try to use these tools perform some data manipulations.</p>
+<p>As it is, the abmibirds dataset would likely not be suitable for
+certain analyses.There is one row per bird, whereas we might be more
+interested in the number of birds observed under certain conditions.</p>
+<p>Let’s say that we are interested in the number of birds of each
+species that was observed in each year of the study. How would we go
+about getting a dataframe with this information?</p>
+<p>Before getting started, I like to think about the different steps
+that are required to get the necessary information.</p>
+<pre class="r"><code>year.summary &lt;- abmibirds %&gt;% group_by(Year, Common.Name) %&gt;%
+  summarise(Observations = n())</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;Year&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre class="r"><code># We can now create a plot of species observation per year
+
+#install.packages(ggplot2)
+library(ggplot2)
+
+#Let&#39;s plot points for the Common Redstart 
+Resdstart.summary &lt;- year.summary  %&gt;% filter(Common.Name == &quot;American Redstart&quot;)
+
+ggplot(data = Resdstart.summary, aes(x = Year, y = Observations)) + 
+  geom_point()+
+  theme_bw()</code></pre>
+<p><img src="data:image/png;base64,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" width="672" /></p>
+<p>Here is tougher question: what is the average number of birds seen at
+a site under each of the different precipitation conditions
+recorded.</p>
+<p>You can have a look at the different classes of precipitation using
+<strong><em>unique(abmibirds$Precipitation)</em></strong></p>
+</div>
+<div id="references-additional-info" class="section level2">
+<h2>References / additional info</h2>
+<ul>
+<li><p>The dplyr website: <a href="https://dplyr.tidyverse.org/index.html" class="uri">https://dplyr.tidyverse.org/index.html</a></p></li>
+<li><p>R for data science chapter 5: <a href="https://r4ds.had.co.nz/transform.html" class="uri">https://r4ds.had.co.nz/transform.html</a></p></li>
+</ul>
 </div>
 
 
