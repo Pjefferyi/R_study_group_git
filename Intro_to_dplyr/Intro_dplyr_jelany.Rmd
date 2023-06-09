@@ -29,8 +29,9 @@ Some of the important functions in this package:
 
 These functions can interact with the **group_by()** function, which allows us to apply them to different subgroups in our dataset.  
 
-First things first, we'll install and load dplyr. You could also install the whole tydiverse package, which is a suite of packages that includes dplyr.  
+First things first, we’ll install and load *dplyr*. You could also install the whole *tidyverse* package, which is actually suite of packages that includes *dplyr*.
 
+In the next block of code, you can uncomment the first line to install dplyr.
 ```{r install dplyr, echo=T, results='hide', message = F}
 #install.packages("dplyr")
 library(dplyr)
@@ -46,9 +47,9 @@ We're also going to install and load the package *mefa4*, but that's just becaus
 
 * **starwars** is a dataset with information on Star Wars characters. Note that it is a tibble instead of a dataframe. We'll see what that is a bit later. 
 
-
+In the next block of code, you can uncomment the first line to install mefa4.
 ```{r datasets, echo=T, results='hide', message = F}
-#install.packages("mefa4")
+#install.packages("mefa4") 
 library(mefa4)
 
 # We can have a look at the first few lines of each dataset
@@ -73,7 +74,7 @@ filter(mtcars, mtcars$cyl == 6)
 # Subset the mtcars dataset to get only cars with 6 cylinders - with pipes
 mtcars %>% filter(cyl == 6)
 
-# For a more complex example, we can find the mean fuel consumption (mpg) of car models with 6 cylinders (cyl)
+# For a more complex example, we can find the mean fuel consumption (mpg) of car models with different numbers of cylinders
 mtcars %>%
    group_by(cyl) %>% # group by the number of cylinder 
    summarise(mpg = mean(mpg)) # calculate the mean of each group 
@@ -96,12 +97,13 @@ The code above returns a tibble, referred to as a "tbl_df" in R. Tibbles are sim
 
 You can read about the differences between dataframes and tibbles here: https://cran.r-project.org/web/packages/tibble/vignettes/tibble.html 
 
-Generally you can turn your tibble into a dataframe using **as.data.frame()**. 
+Generally you can turn a tibble into a dataframe using **as.data.frame()**, and a dataframe into a tibble using **as_tibble()**.
 
 We will use both tibbles and dataframes here. 
 
 ```{r tibble to dataframe, echo=T, results='hide'}
-mpg.by.cyl <- as.data.frame(mpg.by.cyl)
+mpg.by.cyl <- as.data.frame(mpg.by.cyl) # convert to a dataframe
+mpg.by.cyl <- as_tibble(mpg.by.cyl) # convert back to a tibble
 ```
 
 ###  mutate
@@ -114,10 +116,10 @@ For example, the iris dataset has petal length and petal width. What if we wante
 
 ```{r mutate function example, echo=T, results='hide'}
 # Create a new dataframe with the petal area
-iris <- iris %>%  mutate(Petal.Area = Petal.Length * Petal.Width)
+iris %>%  mutate(Petal.Area = Petal.Length * Petal.Width)
 
-# We could also have done this in base R 
-iris$Area <- iris$Petal.Length * iris$Petal.Width
+# We could also have done this in base R (note: running this line modifies the iris dataset)
+iris$Petal.Area <- iris$Petal.Length * iris$Petal.Width 
 
 # Delete the Petal.length column
 iris %>%  mutate(Petal.Length = NULL)
@@ -139,7 +141,7 @@ Note that **if_else()** is distinct from the **ifelse()** function in base R bec
 sw.heights <- starwars %>%  mutate(height_class = if_else(height > 175,  # is the height greater than 175cm ?
                                       "tall", # if yes
                                       "short", # if no
-                                      missing = "unknown")) # if there is no value
+                                      missing = "unknown",), .before = height) # if there is no value
 
 # We can have a look at the relevevant columns of the tibble 
 sw.heights[, c("name", "height", "height_class")]
@@ -149,14 +151,14 @@ This would be a bit tricky to perform without dplyr. One way to do it would be w
 
 If we want to perform more than two operations, we can use **case_when()**. This function allows us to use multiple if_else statements.  
 
-For example, let's add a third height class, "medium sized", for individuals that are between 155 and 175 cm. This time we use the ".default" argument to set a value that will be applied in our height class column if the height of one character is NA. 
+For example, let's add a third height class, "medium", for individuals that are between 155 and 175 cm. This time we use the ".default" argument to set a value that will be applied in our height class column if the height of one character is NA. 
 
 ```{r case_when example, echo=T, results='hide'}
 # Create a new tibble with our three height classes 
-sw.heights <- starwars %>%  mutate(height_class = case_when(height > 175 ~ "tall",  
+sw.heights <- starwars %>%  mutate(height_class = case_when(height > 175  ~ "tall",  
                                       height >= 155 & height <= 175 ~ "medium",
                                       height < 155 ~ "short", 
-                                      .default = "unknown")) 
+                                      .default = "unknown"), .before = height) 
 
 # We can have a look at the columns again 
 sw.heights[, c("name", "height", "height_class")]
@@ -250,6 +252,23 @@ iris %>% group_by(Species) %>%
   summarise(median.sepal.length = median(Sepal.Length))
 ```
 
+A few more examples where we calculate summary statistics. Note that the functions we use inside summarise are not from **dplyr**, but from the **stats** package. 
+
+```{r group_by more examples, echo=T, results='hide'}
+iris %>% group_by(Species) %>%
+  summarise(IQR.Sepal.Length = IQR(Sepal.Length))
+
+iris %>% group_by(Species) %>%
+  summarise(standard.Dev.Sepal.Length = sd(Sepal.Length))
+
+iris %>% group_by(Species) %>%
+  summarise(Median.Sepal.Length = median(Sepal.Length))
+
+iris %>% group_by(Species) %>%
+  summarise(species.counts = n()) #note how n() doesn't require an argument, it just returns the number of rows for each group. 
+
+```
+
 ***group_by()*** can also be used with the other functions we described so far.
 
 Generally, ***group_by()*** is not used by itself as it returns a grouped_df (grouped dataframe) object, which just looks like your original dataset, albeit with a grouping attribute. 
@@ -287,9 +306,21 @@ ggplot(data = Resdstart.summary, aes(x = Year, y = Observations)) +
   theme_bw()
 ```
 
-Here is tougher question: what is the average number of birds seen at a site under each of the different precipitation conditions recorded. 
+A tougher question: what is the average number of birds seen at a site, per day, under each of the different precipitation conditions recorded. 
 
 You can have a look at the different classes of precipitation using ***unique(abmibirds$Precipitation)***
+
+```{r exercice 2, echo=T, results='hide'}
+
+precipitation.summary <- abmibirds %>% group_by(Precipitation, Year, Field.Date) %>%
+  summarise(birdcounts = n()) %>%
+  summarise(mean.sigthings = mean(birdcounts))
+
+#Let's plot the results 
+ggplot(data = precipitation.summary, aes(x = Precipitation, y =mean.sigthings)) + 
+  geom_point() +
+  theme_bw()
+```
 
 ## References / additional info
 
